@@ -10,7 +10,7 @@ st.set_page_config(
     layout="wide"
 )
 
-# Hide GitHub button
+# Hide GitHub button and footer
 st.markdown(
     """
     <style>
@@ -38,10 +38,10 @@ st.markdown(
     }
     .css-18e3th9 {
         background-color: #1A4DA7 !important;  /* Sidebar background color */
-        color: white !important;  /* Sidebar text color */
+        color: black !important;  /* Sidebar text color */
     }
     .st-b4 {
-        color: white !important;
+        color: black !important;
     }
     </style>
     """,
@@ -213,7 +213,6 @@ fig_days_on_market.update_traces(
     )
 )
 
-
 fig_days_on_market.update_layout(
     plot_bgcolor=plot_bgcolor,
     xaxis=axis_style,
@@ -235,15 +234,34 @@ fig_days_on_market.update_layout(
     height=600,  # Set the height to 600 pixels
     showlegend=False  # Remove the legend
 )
+st.plotly_chart(fig_average_rent)
+st.plotly_chart(fig_days_on_market)
 
-
-# Create a line chart for Listing Volume
+# Create and update the line chart for Listing Volume based on the slider
 listing_volume = df_selection["Property Listing Date"].value_counts().sort_index()
 
+
+# Slider for date range, positioned below the Listing Volume chart
+start_date, end_date = st.slider(
+    "Select a date range for Property Listing Volume:",
+    min_value=df_selection["Property Listing Date"].min().date(),
+    max_value=df_selection["Property Listing Date"].max().date(),
+    value=(df_selection["Property Listing Date"].min().date(), df_selection["Property Listing Date"].max().date()),
+    format="MMMM YYYY"
+)
+
+# Filter data based on the selected date range from the slider
+listing_volume_filtered = listing_volume[
+    (listing_volume.index >= pd.to_datetime(start_date)) &
+    (listing_volume.index <= pd.to_datetime(end_date))
+]
+
+# Create the updated line chart based on the filtered date range
 fig_listing_volume = px.line(
-    x=listing_volume.index,
-    y=listing_volume.values,
+    x=listing_volume_filtered.index,
+    y=listing_volume_filtered.values,
     title="Property Listing Volume",
+    labels={"x": "Date", "y": "Volume"},  # Change the axis labels here
     template=plotly_template,
 )
 
@@ -270,7 +288,6 @@ fig_listing_volume.update_layout(
     )
 )
 
-# Display the bar charts and line chart
-st.plotly_chart(fig_average_rent)
-st.plotly_chart(fig_days_on_market)
+# Display the charts in Streamlit
+
 st.plotly_chart(fig_listing_volume)
